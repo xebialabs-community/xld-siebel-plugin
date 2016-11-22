@@ -1,0 +1,28 @@
+plugins {
+    id 'com.github.hierynomus.license' version '0.12.1'
+    id 'com.xebialabs.xldp' version '1.0.5'
+}
+
+defaultTasks 'build'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+version='1.0.0'
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+  maven {
+    url 'https://dist.xebialabs.com/public/maven2'
+  }
+  maven {
+    url 'http://www.knopflerfish.org/maven2'
+  }
+}
+
+license {
+    header rootProject.file('src/main/license/xebialabs_community.license')
+    strictCheck false
+}
+

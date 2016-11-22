@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<!--
+
+    THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
+    FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
+
+-->
+<synthetic xsi:schemaLocation="http://www.xebialabs.com/deployit/synthetic synthetic.xsd" xmlns="http://www.xebialabs.com/deployit/synthetic" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<type type="siebel.enterprise" extends="udm.BaseContainer" root="Infrastructure">
+		<property name="siebelEnterpriseName" label="Siebel Enterprise Name"/>
+		<property name="servers" kind="set_of_ci" referenced-type="siebel.server" required="false" as-containment="true"/>
+		<property name="gateway" kind="ci" referenced-type="siebel.gateway" required="false"/>
+	</type>
+
+    <type type="siebel.server" extends="udm.BaseContainer">
+		<property name="host" kind="ci" referenced-type="overthere.Host"/>
+		<property name="enterprise" kind="ci" referenced-type="siebel.enterprise" as-containment="true"/>
+		<property name="home" label="Siebel Server home" required="true" description="Siebel Server home (For example: /opt/siebel/15.0.0.0.0/ses/siebsrvr)"/>
+		<property name="username" label="Siebel Administrative user" required="true" description="Siebel Server administrator username (For example: sadmin)"/>
+		<property name="password" label="Password for Siebel Administrative user" required="true" password="true" description="Siebel Server administrator password"/>
+		<property name="siebelServerName" label="Siebel Server Name" required="true" description="The Siebel server name (NOT the hostname)"/>
+		<property name="siebelDSN" label="Siebel DSN" required="true" category="Database" description="ODBC system data source name"/>
+		<property name="oracleClientHome" label="Oracle client home directory" required="true" category="Database" description="Oracle client home directory"/>
+        <property name="srvrmgrSanityCheckCommand" default="list components" hidden="true" description="The srvrmgr command to execute in order to determine system health"/>
+		<property name="srvrmgrStatusCheckCommand" default="list servers" hidden="true" description="The srvrmgr command to execute in order to determine system health"/>
+        <property name="objectmanagers" kind="set_of_ci" referenced-type="siebel.objectManager" required="false" as-containment="true"/>
+		<property name="forceShutdown" label="Forcefully shutdown Siebel server" required="false" kind="boolean" default="false" category="Restart" description="Use the -f switch (force shutdown) when stopping the Siebel server"/>
+		<property name="cleanupAfterShutdown" label="Cleanup after Siebel server shutdown" required="false" kind="boolean" default="false" category="Restart" description="After shutdown, remove [siebserverhome]/admin/[siebenterprisename].[siebservername].shm and [siebserverhome]/sys/osdf.[siebenterprisename].[siebservername]"/>
+		<method name="start" label="Start" delegate="shellScript" host="${thisCi.host}" script="siebel/server/server-controltask-start"/>
+		<method name="stop" label="Stop" delegate="shellScript" host="${thisCi.host}" script="siebel/server/server-controltask-stop"/>
+		<method name="status" label="Status" delegate="shellScript" host="${thisCi.host}" script="siebel/server/server-controltask-status"/>
+        <method name="checkConnection" label="Check connection" delegate="shellScript" host="${thisCi.host}" script="siebel/server/server-controltask-checkconnection"/>
+	</type>
+
+	<type type="siebel.objectManager" extends="udm.BaseContainer">
+		<property name="siebelObjectManagerName" label="Object Manager Name"/>
+        <property name="javaHome" label="Java home" required="true" description="Location on the target server where JAVA is installed"/>
+        <property name="scbPort" required="true" label="SCB Port" kind="integer" description="The port assigned to the Siebel Connection Broker on the Siebel Server (For example: 2321)"/>
+		<property name="server" as-containment="true" kind="ci" referenced-type="siebel.server"/>
+        <property name="requiredJdkVersion" default="1.7" hidden="true" required="true" description="Required JDK version for the COM interface"/>
+        <property name="comSanityCheckQueryBusObjName" default="Position" hidden="true" required="true" description="Bus Object Name for sanity check query"/>
+        <property name="comSanityCheckQueryBusCompName" default="Position" hidden="true" required="true" description="Bus Component Name for sanity check query"/>
+        <property name="comSanityCheckQueryField" default="Name" hidden="true" required="true" description="Field name to query"/>
+        <property name="comSanityCheckQuerySearchString" default="*" hidden="true" required="true" description="Query to execute"/>
+        <property name="comSanityCheckQueryResultDisplayField" default="Name" hidden="true" required="true" description="Query to execute"/>
+        <method name="checkComConnection" label="Check connection" delegate="jythonScript" host="${thisCi.server.host}" script="siebel/objectmanager/objectmanager-controltask-checkconnection.py"/>
+    </type>
+
+	<type type="siebel.gateway" extends="udm.BaseContainer">
+		<property name="host" kind="ci" referenced-type="overthere.Host" as-containment="true"/>
+		<property name="home" label="Siebel Gateway home" required="true" description="Siebel Gateway home (For example: /opt/siebel/15.0.0.0.0/ses/gtwysrvr)"/>
+		<property name="oracleClientHome" label="Oracle client home directory" required="true" description="Oracle client home directory"/>
+		<property name="forceShutdown" label="Forcefully shutdown Siebel gateway" required="false" kind="boolean" default="false" category="Restart" description="Use the -f switch (force shutdown) when stopping the Siebel gateway"/>
+		<method name="start" label="Start" delegate="shellScript" host="${thisCi.host}" script="siebel/gateway/gateway-controltask-start"/>
+		<method name="stop" label="Stop" delegate="shellScript" host="${thisCi.host}" script="siebel/gateway/gateway-controltask-stop"/>
+		<method name="status" label="Status" delegate="shellScript" host="${thisCi.host}" script="siebel/gateway/gateway-controltask-status"/>
+	</type>
+
+	<type type="siebel.oracleWebTier" extends="udm.BaseContainer">
+		<property name="host" kind="ci" referenced-type="overthere.Host" as-containment="true"/>
+		<property name="home" label="Oracle WebTier Home" required="true" description="Webserver home (For example: /opt/oracle/webtier/Middleware/Oracle_WT1)"/>
+		<property name="oracleOhsWebservers" kind="set_of_ci" referenced-type="siebel.oracleOhsWebserver" required="false" as-containment="true"/>
+	</type>
+
+	<type type="siebel.oracleOhsWebserver" extends="udm.BaseContainer">
+		<property name="instanceName" label="Instance Name" required="true" description="OHS Instance Name (For example: ohs1)"/>
+		<property name="home" label="Instance Home" required="true" description="OHS Instance Home (For example: /opt/oracle/webtier/Middleware/Oracle_WT1/instances/instance1)"/>
+		<property name="webTierInstance" label="WebTier Instance" as-containment="true" kind="ci" referenced-type="siebel.oracleWebTier"/>
+		<method name="opmnStart" label="OPMN Start" delegate="shellScript" host="${thisCi.webTierInstance.host}" script="siebel/webtier/opmn/opmn-controltask-start"/>
+		<method name="opmnStop" label="OPMN Stop" delegate="shellScript" host="${thisCi.webTierInstance.host}" script="siebel/webtier/opmn/opmn-controltask-stop"/>
+		<method name="opmnStatus" label="OPMN Status" delegate="shellScript" host="${thisCi.webTierInstance.host}" script="siebel/webtier/opmn/opmn-controltask-status"/>
+		<method name="ohsStart" label="OHS Start" delegate="shellScript" host="${thisCi.webTierInstance.host}" script="siebel/webtier/ohs/ohs-controltask-start"/>
+		<method name="ohsStop" label="OHS Stop" delegate="shellScript" host="${thisCi.webTierInstance.host}" script="siebel/webtier/ohs/ohs-controltask-stop"/>
+	</type>
+
+	<type type="siebel.record" extends="udm.BaseDeployed" deployable-type="siebel.recordSpec" container-type="siebel.objectManager">
+		<generate-deployable type="siebel.recordSpec" extends="udm.BaseDeployable"/>
+		<property name="busObjName" label="Business Object" required="true" description="Bus Object Name (e.g. Position)" />
+		<property name="busCompName" label="Business Component" required="true" description="Bus Component Name (e.g. Position)"/>
+		<property name="fieldValues" kind="map_string_string" required="true" description="The field values to be set"/>
+		<property name="childRecords" kind="set_of_ci" referenced-type="siebel.childRecord" required="false" as-containment="true"/>
+	</type>
+
+	<type-modification type="siebel.recordSpec">
+		<property name="childRecords" kind="set_of_ci" referenced-type="siebel.childRecordSpec" required="false" as-containment="true"/>
+	</type-modification>
+
+	<type type="siebel.childRecord" deployable-type="siebel.childRecordSpec" container-type="siebel.record" extends="udm.BaseEmbeddedDeployed">
+		<generate-deployable type="siebel.childRecordSpec" extends="udm.BaseEmbeddedDeployable"/>
+		<property name="busCompName" label="Business Component" required="true" description="Bus Component Name (e.g. Position)"/>
+		<property name="fieldValues" kind="map_string_string" required="true" description="The field values to be set"/>
+	</type>
+
+	<type type="siebel.workflowActivation" deployable-type="siebel.workflowActivationSpec" container-type="siebel.objectManager" extends="udm.BaseDeployed">
+		<generate-deployable type="siebel.workflowActivationSpec" extends="udm.BaseDeployable"/>
+		<property name="workflowName" label="Workflow Name" description="Name of the workflow in the repository"/>
+		<property name="workflowVersion" label="Version Of Workflow In Repository To Activate" description="Version of the workflow in the repository to activate"/>
+		<property name="workflowStatusCheckValue" default="Active" hidden="true"/>
+		<property name="busObjName" default="Front Office Workflow" hidden="true"/>
+		<property name="busCompName" default="Repository Workflow Process Read Only" hidden="true"/>
+	</type>
+
+</synthetic>

@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!--
+
+    THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
+    FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
+
+-->
+<rules xmlns="http://www.xebialabs.com/xl-deploy/xl-rules">
+    <rule name="siebel.record.CREATE_MODIFY" scope="deployed">
+        <conditions>
+            <type>siebel.record</type>
+            <operation>CREATE</operation>
+            <operation>MODIFY</operation>
+        </conditions>
+        <steps>
+            <jython>
+                <description expression="true">'Insert [%s] into [%s]' % (deployed.name, deployed.container.name)</description>
+                <script>siebel/objectmanager/objectmanager-upsert-parent-child-record.py</script>
+            </jython>
+        </steps>
+    </rule>
+    <rule name="siebel.record.DESTROY" scope="deployed">
+        <conditions>
+            <type>siebel.record</type>
+            <operation>DESTROY</operation>
+        </conditions>
+        <steps>
+            <jython>
+                <description expression="true">'Delete [%s] from [%s]' % (previousDeployed.name, previousDeployed.container.name)</description>
+                <script>siebel/objectmanager/objectmanager-delete-parent-child-record.py</script>
+            </jython>
+        </steps>
+    </rule>
+    <rule name="siebel.workflowActivation.CREATE_MODIFY" scope="deployed">
+        <conditions>
+            <type>siebel.workflowActivation</type>
+            <operation>CREATE</operation>
+            <operation>MODIFY</operation>
+        </conditions>
+        <steps>
+            <jython>
+                <description expression="true">'Activate version [%s] of workflow [%s] on [%s]' % (deployed.workflowVersion, deployed.workflowName, deployed.container.name)</description>
+                <script>siebel/objectmanager/objectmanager-activate-workflow.py</script>
+            </jython>
+        </steps>
+    </rule>
+</rules>
